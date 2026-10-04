@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { mapRowToFilm, getMediaForTitle } from "@/lib/db/mapper";
+import { getPersonPhotoSync } from "@/lib/tmdb";
 import type { FicheFilm } from "@/types/api";
 
 // --no-request: ALTER TABLE casting ADD COLUMN IF NOT EXISTS personnage VARCHAR(100);
@@ -71,8 +72,8 @@ export async function GET(
       actorId: String(c.id),
       name: c.nom,
       role: c.role === "realisateur" ? "Réalisateur" : `Rôle ${index + 1}`,
-      // --no-request: SELECT photo_url FROM personnes WHERE id = $1; (photo_url absente du schéma actuel)
-      photoUrl: `https://images.unsplash.com/photo-${1500000000000 + (c.id * 1234567) % 100000000}?w=400&auto=format&fit=crop&q=80`,
+      // --no-request: SELECT photo_url FROM personnes WHERE id = $1; (photo_url absente du schéma actuel, servie via lib/tmdb)
+      photoUrl: getPersonPhotoSync(c.nom),
     }));
 
     let saga = undefined;
@@ -93,7 +94,7 @@ export async function GET(
           actorId: "1",
           name: row.realisateurs || "Réalisateur Inconnu",
           role: "Réalisateur",
-          photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
+          photoUrl: getPersonPhotoSync(row.realisateurs),
         },
       ],
       saga,

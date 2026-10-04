@@ -103,9 +103,9 @@ CREATE TABLE public.liste (
     id integer NOT NULL,
     membre character varying(100) NOT NULL,
     titre character varying(100) NOT NULL,
-    visibility character varying(12) DEFAULT 'priv‚'::character varying,
+    visibility character varying(12) DEFAULT 'privé'::character varying,
     create_at date DEFAULT now(),
-    CONSTRAINT liste_visibility_check CHECK (((visibility)::text = ANY ((ARRAY['public'::character varying, 'priv‚'::character varying])::text[])))
+    CONSTRAINT liste_visibility_check CHECK (((visibility)::text = ANY ((ARRAY['public'::character varying, 'privé'::character varying])::text[])))
 );
 
 
@@ -453,36 +453,36 @@ COPY public.casting (film_id, personne_id, role) FROM stdin;
 --
 
 COPY public.films (id, titre, annee, genre, saga_id, film_precedent_id, details) FROM stdin;
-1	Apollo 13	1995	Drame	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["espace", "histoire vraie"], "duree": 140, "langue": "anglais"}
-2	Mystic River	2003	Thriller	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["enquÃªte", "drame familial"], "duree": 138, "langue": "anglais"}
-3	Des hommes d'honneur	1992	Drame	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["procÃ¨s", "armÃ©e"], "duree": 138, "langue": "anglais"}
-4	X-Men : Le Commencement	2011	Science-fiction	3	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["super-hÃ©ros", "mutants"], "duree": 132, "langue": "anglais"}
-7	Forrest Gump	1994	Drame	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["destin", "histoire amÃ©ricaine"], "duree": 142, "langue": "anglais", "oscar_meilleur_film": true}
-8	Seul au monde	2000	Aventure	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["survie", "Ã®le"], "duree": 143, "langue": "anglais"}
-9	Il faut sauver le soldat Ryan	1998	Guerre	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["seconde guerre mondiale"], "duree": 169, "langue": "anglais"}
-10	ArrÃªte-moi si tu peux	2002	Policier	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["histoire vraie", "arnaque"], "duree": 141, "langue": "anglais"}
-11	Titanic	1997	Romance	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["romance", "naufrage"], "duree": 194, "langue": "anglais", "oscar_meilleur_film": true}
-12	Inception	2010	Science-fiction	\N	\N	{"pays": ["Ã‰tats-Unis", "Royaume-Uni"], "tags": ["rÃªves", "braquage"], "duree": 148, "langue": "anglais"}
-13	Les InfiltrÃ©s	2006	Policier	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["mafia", "remake"], "duree": 151, "langue": "anglais", "oscar_meilleur_film": true}
-14	Once Upon a Timeâ€¦ in Hollywood	2019	ComÃ©die	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["Hollywood", "annÃ©es 60"], "duree": 161, "langue": "anglais"}
-15	Le Loup de Wall Street	2013	ComÃ©die	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["histoire vraie", "finance"], "duree": 180, "langue": "anglais"}
-16	Fight Club	1999	Thriller	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["culte", "twist"], "duree": 139, "langue": "anglais"}
-17	Ocean's Eleven	2001	Policier	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["braquage", "Las Vegas"], "duree": 116, "langue": "anglais"}
-18	Seven	1995	Thriller	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["enquÃªte", "tueur en sÃ©rie", "twist"], "duree": 127, "langue": "anglais"}
-19	Batman Begins	2005	Action	2	\N	{"pays": ["Ã‰tats-Unis", "Royaume-Uni"], "tags": ["super-hÃ©ros", "Gotham"], "duree": 140, "langue": "anglais"}
-22	Les Ã‰vadÃ©s	1994	Drame	\N	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["prison", "amitiÃ©", "culte"], "duree": 142, "langue": "anglais"}
-23	Intouchables	2011	ComÃ©die	\N	\N	{"pays": ["France"], "tags": ["histoire vraie", "amitiÃ©"], "duree": 112, "langue": "franÃ§ais"}
-24	La MÃ´me	2007	Drame	\N	\N	{"pays": ["France"], "tags": ["biopic", "musique"], "duree": 140, "langue": "franÃ§ais"}
-25	The Artist	2011	ComÃ©die	\N	\N	{"pays": ["France"], "tags": ["cinÃ©ma muet", "Hollywood"], "duree": 100, "langue": "muet", "oscar_meilleur_film": true}
-26	Le Fabuleux Destin d'AmÃ©lie Poulain	2001	ComÃ©die	\N	\N	{"pays": ["France"], "tags": ["Paris", "culte"], "duree": 122, "langue": "franÃ§ais"}
-27	La Haine	1995	Drame	\N	\N	{"pays": ["France"], "tags": ["banlieue", "noir et blanc", "culte"], "duree": 98, "langue": "franÃ§ais"}
-28	Retour vers le futur	1985	Science-fiction	1	\N	{"pays": ["Ã‰tats-Unis"], "tags": ["voyage dans le temps", "culte"], "duree": 116, "langue": "anglais"}
-5	X-Men : Days of Future Past	2014	Science-fiction	3	4	{"pays": ["Ã‰tats-Unis"], "tags": ["super-hÃ©ros", "mutants", "voyage dans le temps"], "duree": 132, "langue": "anglais"}
-6	X-Men : Apocalypse	2016	Science-fiction	3	5	{"pays": ["Ã‰tats-Unis"], "tags": ["super-hÃ©ros", "mutants"], "duree": 144, "langue": "anglais"}
-20	The Dark Knight	2008	Action	2	19	{"pays": ["Ã‰tats-Unis", "Royaume-Uni"], "tags": ["super-hÃ©ros", "Gotham", "culte"], "duree": 152, "langue": "anglais"}
-21	The Dark Knight Rises	2012	Action	2	20	{"pays": ["Ã‰tats-Unis", "Royaume-Uni"], "tags": ["super-hÃ©ros", "Gotham"], "duree": 164, "langue": "anglais"}
-29	Retour vers le futur II	1989	Science-fiction	1	28	{"pays": ["Ã‰tats-Unis"], "tags": ["voyage dans le temps"], "duree": 108, "langue": "anglais"}
-30	Retour vers le futur III	1990	Science-fiction	1	29	{"pays": ["Ã‰tats-Unis"], "tags": ["voyage dans le temps", "western"], "duree": 118, "langue": "anglais"}
+1	Apollo 13	1995	Drame	\N	\N	{"pays": ["États-Unis"], "tags": ["espace", "histoire vraie"], "duree": 140, "langue": "anglais"}
+2	Mystic River	2003	Thriller	\N	\N	{"pays": ["États-Unis"], "tags": ["enquête", "drame familial"], "duree": 138, "langue": "anglais"}
+3	Des hommes d'honneur	1992	Drame	\N	\N	{"pays": ["États-Unis"], "tags": ["procès", "armée"], "duree": 138, "langue": "anglais"}
+4	X-Men : Le Commencement	2011	Science-fiction	3	\N	{"pays": ["États-Unis"], "tags": ["super-héros", "mutants"], "duree": 132, "langue": "anglais"}
+7	Forrest Gump	1994	Drame	\N	\N	{"pays": ["États-Unis"], "tags": ["destin", "histoire américaine"], "duree": 142, "langue": "anglais", "oscar_meilleur_film": true}
+8	Seul au monde	2000	Aventure	\N	\N	{"pays": ["États-Unis"], "tags": ["survie", "île"], "duree": 143, "langue": "anglais"}
+9	Il faut sauver le soldat Ryan	1998	Guerre	\N	\N	{"pays": ["États-Unis"], "tags": ["seconde guerre mondiale"], "duree": 169, "langue": "anglais"}
+10	Arrête-moi si tu peux	2002	Policier	\N	\N	{"pays": ["États-Unis"], "tags": ["histoire vraie", "arnaque"], "duree": 141, "langue": "anglais"}
+11	Titanic	1997	Romance	\N	\N	{"pays": ["États-Unis"], "tags": ["romance", "naufrage"], "duree": 194, "langue": "anglais", "oscar_meilleur_film": true}
+12	Inception	2010	Science-fiction	\N	\N	{"pays": ["États-Unis", "Royaume-Uni"], "tags": ["rêves", "braquage"], "duree": 148, "langue": "anglais"}
+13	Les Infiltrés	2006	Policier	\N	\N	{"pays": ["États-Unis"], "tags": ["mafia", "remake"], "duree": 151, "langue": "anglais", "oscar_meilleur_film": true}
+14	Once Upon a Time… in Hollywood	2019	Comédie	\N	\N	{"pays": ["États-Unis"], "tags": ["Hollywood", "années 60"], "duree": 161, "langue": "anglais"}
+15	Le Loup de Wall Street	2013	Comédie	\N	\N	{"pays": ["États-Unis"], "tags": ["histoire vraie", "finance"], "duree": 180, "langue": "anglais"}
+16	Fight Club	1999	Thriller	\N	\N	{"pays": ["États-Unis"], "tags": ["culte", "twist"], "duree": 139, "langue": "anglais"}
+17	Ocean's Eleven	2001	Policier	\N	\N	{"pays": ["États-Unis"], "tags": ["braquage", "Las Vegas"], "duree": 116, "langue": "anglais"}
+18	Seven	1995	Thriller	\N	\N	{"pays": ["États-Unis"], "tags": ["enquête", "tueur en série", "twist"], "duree": 127, "langue": "anglais"}
+19	Batman Begins	2005	Action	2	\N	{"pays": ["États-Unis", "Royaume-Uni"], "tags": ["super-héros", "Gotham"], "duree": 140, "langue": "anglais"}
+22	Les Évadés	1994	Drame	\N	\N	{"pays": ["États-Unis"], "tags": ["prison", "amitié", "culte"], "duree": 142, "langue": "anglais"}
+23	Intouchables	2011	Comédie	\N	\N	{"pays": ["France"], "tags": ["histoire vraie", "amitié"], "duree": 112, "langue": "français"}
+24	La Môme	2007	Drame	\N	\N	{"pays": ["France"], "tags": ["biopic", "musique"], "duree": 140, "langue": "français"}
+25	The Artist	2011	Comédie	\N	\N	{"pays": ["France"], "tags": ["cinéma muet", "Hollywood"], "duree": 100, "langue": "muet", "oscar_meilleur_film": true}
+26	Le Fabuleux Destin d'Amélie Poulain	2001	Comédie	\N	\N	{"pays": ["France"], "tags": ["Paris", "culte"], "duree": 122, "langue": "français"}
+27	La Haine	1995	Drame	\N	\N	{"pays": ["France"], "tags": ["banlieue", "noir et blanc", "culte"], "duree": 98, "langue": "français"}
+28	Retour vers le futur	1985	Science-fiction	1	\N	{"pays": ["États-Unis"], "tags": ["voyage dans le temps", "culte"], "duree": 116, "langue": "anglais"}
+5	X-Men : Days of Future Past	2014	Science-fiction	3	4	{"pays": ["États-Unis"], "tags": ["super-héros", "mutants", "voyage dans le temps"], "duree": 132, "langue": "anglais"}
+6	X-Men : Apocalypse	2016	Science-fiction	3	5	{"pays": ["États-Unis"], "tags": ["super-héros", "mutants"], "duree": 144, "langue": "anglais"}
+20	The Dark Knight	2008	Action	2	19	{"pays": ["États-Unis", "Royaume-Uni"], "tags": ["super-héros", "Gotham", "culte"], "duree": 152, "langue": "anglais"}
+21	The Dark Knight Rises	2012	Action	2	20	{"pays": ["États-Unis", "Royaume-Uni"], "tags": ["super-héros", "Gotham"], "duree": 164, "langue": "anglais"}
+29	Retour vers le futur II	1989	Science-fiction	1	28	{"pays": ["États-Unis"], "tags": ["voyage dans le temps"], "duree": 108, "langue": "anglais"}
+30	Retour vers le futur III	1990	Science-fiction	1	29	{"pays": ["États-Unis"], "tags": ["voyage dans le temps", "western"], "duree": 118, "langue": "anglais"}
 \.
 
 
@@ -896,9 +896,9 @@ COPY public.notes (utilisateur_id, film_id, note, note_le) FROM stdin;
 
 COPY public.personnes (id, nom) FROM stdin;
 1	Anne Hathaway
-2	Ã‰ric Toledano
+2	Éric Toledano
 3	Audrey Tautou
-4	BÃ©rÃ©nice Bejo
+4	Bérénice Bejo
 5	Bill Paxton
 6	Brad Pitt
 7	Bryan Singer
@@ -911,16 +911,16 @@ COPY public.personnes (id, nom) FROM stdin;
 14	Ed Harris
 15	Edward Norton
 16	Elliot Page
-17	FranÃ§ois Cluzet
+17	François Cluzet
 18	Frank Darabont
-19	GÃ©rard Depardieu
+19	Gérard Depardieu
 20	Gary Oldman
 21	Gary Sinise
 22	George Clooney
 23	Heath Ledger
 24	Helena Bonham Carter
 25	Helen Hunt
-26	Hubert KoundÃ©
+26	Hubert Koundé
 27	Hugh Jackman
 28	Jack Nicholson
 29	James Cameron
@@ -956,7 +956,7 @@ COPY public.personnes (id, nom) FROM stdin;
 59	Robin Wright
 60	Rob Reiner
 61	Ron Howard
-62	SaÃ¯d Taghmaoui
+62	Saïd Taghmaoui
 63	Sean Penn
 64	Steven Soderbergh
 65	Steven Spielberg
@@ -977,7 +977,7 @@ COPY public.personnes (id, nom) FROM stdin;
 COPY public.sagas (id, nom) FROM stdin;
 1	Retour vers le futur
 2	The Dark Knight
-3	X-Men : la prÃ©logie
+3	X-Men : la prélogie
 \.
 
 
@@ -989,7 +989,7 @@ COPY public.utilisateurs (id, pseudo, ville, inscrit_le) FROM stdin;
 1	cinephile_92	Nanterre	2024-03-12
 2	popcorn_queen	Lyon	2024-09-01
 3	nolanfan	Paris	2025-01-05
-4	maxou_cinÃ©	Marseille	2025-02-20
+4	maxou_ciné	Marseille	2025-02-20
 5	lea.reel	Lille	2025-04-02
 6	darkroom	Nantes	2025-06-18
 7	bobine	Bordeaux	2025-09-07

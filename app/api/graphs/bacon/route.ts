@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { getMediaForTitle } from "@/lib/db/mapper";
+import { getPersonPhotoSync } from "@/lib/tmdb";
 import type { BaconPath } from "@/types/api";
 
 export async function GET(request: NextRequest) {
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
           actor: {
             id: String(step.actor_id),
             name: step.actor,
-            photoUrl: `https://images.unsplash.com/photo-${1500000000000 + (step.actor_id * 1234567) % 100000000}?w=400&auto=format&fit=crop&q=80`,
+            photoUrl: getPersonPhotoSync(step.actor),
           },
           film: step.film
             ? {

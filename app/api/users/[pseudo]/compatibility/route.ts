@@ -43,7 +43,7 @@ export async function GET(
 
     const compatibility: CompatibilityScore = {
       targetPseudo,
-      targetAvatarUrl: `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80`,
+      targetAvatarUrl: "",
       score,
       commonFavoritesCount: filmsCommuns,
       sharedTopGenres,

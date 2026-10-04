@@ -19,6 +19,8 @@ services:
       PGPASSWORD: ${PGPASSWORD:-postgres}
       PGDATABASE: ${PGDATABASE:-filmbox}
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+      TMDB_READ_TOKEN: ${TMDB_READ_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy

@@ -41,8 +41,8 @@ export async function GET() {
         filmCount: parseInt(row.film_count || "0", 10),
         isPublic: row.visibility === "public",
         coverPosters: coverPosters.length > 0 ? coverPosters : [
-          "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&auto=format&fit=crop&q=80",
-          "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400&auto=format&fit=crop&q=80",
+          getMediaForTitle("Inception").poster,
+          getMediaForTitle("The Dark Knight").poster,
         ],
         createdAt: new Date(row.create_at).toISOString(),
         updatedAt: new Date(row.create_at).toISOString(),

@@ -2,6 +2,7 @@
 // --no-request: ALTER TABLE films ADD COLUMN IF NOT EXISTS poster_url TEXT;
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { getPersonPhotoSync } from "@/lib/tmdb";
 import type { RankingDirector } from "@/types/api";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +54,7 @@ export async function GET() {
         return {
           directorId: String(row.id),
           name: row.realisateur,
-          photoUrl: `https://images.unsplash.com/photo-${1500000000000 + (row.id * 1234567) % 100000000}?w=400&auto=format&fit=crop&q=80`,
+          photoUrl: getPersonPhotoSync(row.realisateur),
           averageRating: parseFloat(row.moyenne || "0"),
           filmCount: parseInt(row.nb_films || "0", 10),
           topFilms: topFilmRes.rows.map((tf: any) => ({
