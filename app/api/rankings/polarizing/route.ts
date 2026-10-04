@@ -1,8 +1,10 @@
+// --no-request: ALTER TABLE films ADD COLUMN IF NOT EXISTS poster_url TEXT, ADD COLUMN IF NOT EXISTS backdrop_url TEXT, ADD COLUMN IF NOT EXISTS synopsis TEXT;
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { mapRowToFilm } from "@/lib/db/mapper";
-import { MOCK_POLARIZING_FILMS } from "@/lib/mock-data";
 import type { PolarizingFilm } from "@/types/api";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -35,20 +37,17 @@ export async function GET() {
 
     const res = await query(sql);
 
-    if (res.rows.length > 0) {
-      const polarizing: PolarizingFilm[] = res.rows.map((row: any) => ({
-        film: mapRowToFilm(row),
-        divergenceScore: parseFloat(row.ecart || 1.5),
-        standardDeviation: parseFloat(row.ecart_type || 0.8),
-        positivePercentage: parseInt(row.positive_pct || 60, 10),
-        negativePercentage: parseInt(row.negative_pct || 40, 10),
-      }));
+    const polarizing: PolarizingFilm[] = res.rows.map((row: any) => ({
+      film: mapRowToFilm(row),
+      divergenceScore: parseFloat(row.ecart || "0"),
+      standardDeviation: parseFloat(row.ecart_type || "0"),
+      positivePercentage: parseInt(row.positive_pct || "0", 10),
+      negativePercentage: parseInt(row.negative_pct || "0", 10),
+    }));
 
-      return NextResponse.json(polarizing);
-    }
+    return NextResponse.json(polarizing);
   } catch (err) {
-    console.warn("[API /rankings/polarizing] DB query fallback:", err);
+    console.error("[API /rankings/polarizing] DB error:", err);
+    return NextResponse.json({ error: "Erreur lors de la récupération des films clivants" }, { status: 500 });
   }
-
-  return NextResponse.json(MOCK_POLARIZING_FILMS);
 }

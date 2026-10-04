@@ -707,7 +707,7 @@ COPY public.journal (id, utilisateur_id, film_id, date_visionnage) FROM stdin;
 --
 
 COPY public.liste (id, membre, titre, visibility, create_at) FROM stdin;
-1	yoda	Mon top Nolan	public	2026-09-27
+1	cinephile_92	Mon top Nolan	public	2026-09-27
 \.
 
 
@@ -1288,3 +1288,7 @@ AS $$
     JOIN films f         ON f.id = na.film_id
     ORDER BY ABS(na.note - nb.note) DESC, f.titre;
 $$;
+
+-- Réinitialisation de la version de collation pour compatibilité alpine/musl (évite tout warning de collation)
+UPDATE pg_database SET datcollversion = NULL;
+

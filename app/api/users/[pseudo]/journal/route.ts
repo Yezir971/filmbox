@@ -1,7 +1,8 @@
+// --no-request: ALTER TABLE journal ADD COLUMN IF NOT EXISTS commentaire TEXT, ADD COLUMN IF NOT EXISTS rewatch BOOLEAN DEFAULT false;
+// --no-request: ALTER TABLE films ADD COLUMN IF NOT EXISTS poster_url TEXT;
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { getMediaForTitle } from "@/lib/db/mapper";
-import { MOCK_JOURNAL } from "@/lib/mock-data";
 import type { JournalEntry } from "@/types/api";
 
 export async function GET(
@@ -30,28 +31,25 @@ export async function GET(
 
     const res = await query(sql, [pseudo]);
 
-    if (res.rows.length > 0) {
-      const journal: JournalEntry[] = res.rows.map((row: any) => {
-        const media = getMediaForTitle(row.titre);
-        return {
-          id: String(row.id),
-          filmId: String(row.film_id),
-          filmTitle: row.titre,
-          posterUrl: media.poster,
-          watchedAt: new Date(row.date_visionnage).toISOString(),
-          note: row.note ? parseFloat(row.note) : undefined,
-          comment: row.jours_depuis_precedent
-            ? `Vu ${row.jours_depuis_precedent} jours après le film précédent.`
-            : "Premier visionnage répertorié.",
-          rewatch: false,
-        };
-      });
+    const journal: JournalEntry[] = res.rows.map((row: any) => {
+      const media = getMediaForTitle(row.titre);
+      return {
+        id: String(row.id),
+        filmId: String(row.film_id),
+        filmTitle: row.titre,
+        posterUrl: media.poster,
+        watchedAt: new Date(row.date_visionnage).toISOString(),
+        note: row.note ? parseFloat(row.note) : undefined,
+        comment: row.jours_depuis_precedent
+          ? `Vu ${row.jours_depuis_precedent} jours après le film précédent.`
+          : "Premier visionnage répertorié.",
+        rewatch: false,
+      };
+    });
 
-      return NextResponse.json(journal);
-    }
+    return NextResponse.json(journal);
   } catch (err) {
-    console.warn(`[API /users/${params.pseudo}/journal] DB query fallback:`, err);
+    console.error(`[API /users/${params.pseudo}/journal] DB error:`, err);
+    return NextResponse.json({ error: "Erreur lors de la récupération du journal" }, { status: 500 });
   }
-
-  return NextResponse.json(MOCK_JOURNAL);
 }

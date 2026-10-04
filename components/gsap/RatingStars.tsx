@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
+import { useSWRConfig } from "swr";
 import gsap from "gsap";
 import { Star } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -23,19 +25,35 @@ export function RatingStars({
   const [hoverRating, setHoverRating] = React.useState(0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const { isAuthenticated } = useSession();
+  const { user } = useSession();
   const { toast } = useToast();
+  const router = useRouter();
+  const { mutate } = useSWRConfig();
   const reducedMotion = useReducedMotion();
 
-  const handleRate = async (note: number) => {
-    if (!isAuthenticated) {
-      toast({
-        variant: "destructive",
-        title: "Connexion requise",
-        description: "Vous devez être connecté pour attribuer une note à ce film.",
-      });
-      return;
+  React.useEffect(() => {
+    if (initialRating > 0) {
+      setRating(initialRating);
     }
+  }, [initialRating]);
+
+  // Synchronisation dynamique avec la base si aucune note initiale n'est transmise
+  React.useEffect(() => {
+    const activePseudo = user?.pseudo || "cinephile_92";
+    if (initialRating === 0) {
+      fetch(`/api/notes?filmId=${filmId}&userPseudo=${encodeURIComponent(activePseudo)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data && data.note != null) {
+            setRating(Number(data.note));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [filmId, initialRating, user?.pseudo]);
+
+  const handleRate = async (note: number) => {
+    const activePseudo = user?.pseudo || "cinephile_92";
 
     setRating(note);
     onRatingChanged?.(note);
@@ -47,13 +65,43 @@ export function RatingStars({
 
     try {
       setIsSubmitting(true);
-      await submitRating({ filmId, note });
+      const res = await submitRating({
+        filmId,
+        note,
+        userPseudo: activePseudo,
+      });
+
+      // Émission d'un événement global pour actualiser les badges de notation en direct
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("filmbox:rating-updated", {
+            detail: {
+              filmId,
+              note,
+              weightedRating: res.weightedRating,
+              ratingsCount: res.ratingsCount,
+            },
+          })
+        );
+      }
+
+      // Invalidation du cache SWR pour les catalogues et listes
+      mutate(
+        (key) => typeof key === "string" && (key.startsWith("/api/films") || key.startsWith("/api/notes")),
+        undefined,
+        { revalidate: true }
+      );
+
+      // Revalidation du Server Component Next.js
+      router.refresh();
+
       toast({
         variant: "gold",
         title: "Note enregistrée !",
-        description: `Votre note de ${note}/5 a été ajoutée à votre profil.`,
+        description: `Votre note de ${note}/5 a été mise à jour avec succès.`,
       });
-    } catch {
+    } catch (err) {
+      console.error("[RatingStars] Submit rating error:", err);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -118,33 +166,38 @@ export function RatingStars({
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="relative inline-flex items-center gap-1 select-none"
-    >
-      {[1, 2, 3, 4, 5].map((star) => {
-        const isFilled = (hoverRating || rating) >= star;
-        return (
-          <button
-            key={star}
-            type="button"
-            disabled={isSubmitting}
-            onClick={() => handleRate(star)}
-            onMouseEnter={() => setHoverRating(star)}
-            onMouseLeave={() => setHoverRating(0)}
-            aria-label={`Attribuer la note de ${star} sur 5`}
-            className="p-1 rounded-sm text-muted-foreground hover:scale-110 active:scale-95 transition-all focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <Star
-              className={`h-6 w-6 transition-colors ${
-                isFilled
-                  ? "fill-gold-400 text-gold-400 drop-shadow-[0_0_8px_rgba(229,169,60,0.6)]"
-                  : "text-muted-foreground/50 hover:text-gold-300/70"
-              }`}
-            />
-          </button>
-        );
-      })}
+    <div className="flex items-center gap-3">
+      <div
+        ref={containerRef}
+        className="relative inline-flex items-center gap-1 select-none"
+      >
+        {[1, 2, 3, 4, 5].map((star) => {
+          const isFilled = (hoverRating || rating) >= star;
+          return (
+            <button
+              key={star}
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => handleRate(star)}
+              onMouseEnter={() => setHoverRating(star)}
+              onMouseLeave={() => setHoverRating(0)}
+              aria-label={`Attribuer la note de ${star} sur 5`}
+              className="p-1 rounded-sm text-muted-foreground hover:scale-110 active:scale-95 transition-all focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <Star
+                className={`h-6 w-6 transition-colors ${
+                  isFilled
+                    ? "fill-gold-400 text-gold-400 drop-shadow-[0_0_8px_rgba(229,169,60,0.6)]"
+                    : "text-muted-foreground/50 hover:text-gold-300/70"
+                }`}
+              />
+            </button>
+          );
+        })}
+      </div>
+      <span className="text-sm font-semibold text-gold-400 min-w-[3.5rem]">
+        {hoverRating > 0 ? `${hoverRating} / 5` : rating > 0 ? `${rating} / 5` : "Non noté"}
+      </span>
     </div>
   );
 }

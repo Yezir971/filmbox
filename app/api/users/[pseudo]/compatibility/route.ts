@@ -1,3 +1,4 @@
+// --no-request: ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import type { CompatibilityScore } from "@/types/api";
@@ -21,12 +22,12 @@ export async function GET(
     const statsRes = await query(statsSql, [sourcePseudo, targetPseudo]);
 
     const filmsCommuns = parseInt(statsRes.rows[0]?.films_communs || "0", 10);
-    const ecartMoyen = parseFloat(statsRes.rows[0]?.ecart_moyen || "1.0");
+    const ecartMoyen = statsRes.rows[0]?.ecart_moyen != null ? parseFloat(statsRes.rows[0].ecart_moyen) : null;
 
     // Calcul du score de 0 à 100% : un écart moyen de 0 donne 100%, un écart de 2 donne 60%
-    const score = filmsCommuns > 0
-      ? Math.max(30, Math.min(99, Math.round(100 - ecartMoyen * 20)))
-      : 75;
+    const score = filmsCommuns > 0 && ecartMoyen !== null
+      ? Math.max(0, Math.min(100, Math.round(100 - ecartMoyen * 20)))
+      : 0;
 
     // Genres partagés
     const genresSql = `
@@ -42,24 +43,18 @@ export async function GET(
 
     const compatibility: CompatibilityScore = {
       targetPseudo,
-      targetAvatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
+      targetAvatarUrl: `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80`,
       score,
-      commonFavoritesCount: filmsCommuns || 5,
-      sharedTopGenres: sharedTopGenres.length > 0 ? sharedTopGenres : ["Science-Fiction", "Thriller", "Drame"],
-      summary: `Compatibilité cinématographique de ${score}% calculée sur ${filmsCommuns} films notés en commun (écart moyen : ${ecartMoyen}/5).`,
+      commonFavoritesCount: filmsCommuns,
+      sharedTopGenres,
+      summary: filmsCommuns > 0
+        ? `Compatibilité cinématographique de ${score}% calculée sur ${filmsCommuns} films notés en commun (écart moyen : ${ecartMoyen}/5).`
+        : `Aucun film noté en commun pour le moment avec ${targetPseudo}.`,
     };
 
     return NextResponse.json(compatibility);
   } catch (err) {
-    console.warn(`[API /users/${params.pseudo}/compatibility] DB query fallback:`, err);
+    console.error(`[API /users/${params.pseudo}/compatibility] DB error:`, err);
+    return NextResponse.json({ error: "Erreur lors du calcul de la compatibilité" }, { status: 500 });
   }
-
-  return NextResponse.json({
-    targetPseudo,
-    targetAvatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
-    score: 88,
-    commonFavoritesCount: 6,
-    sharedTopGenres: ["Science-Fiction", "Thriller", "Drame"],
-    summary: `Compatibilité cinématographique de 88% avec ${targetPseudo}. Vos goûts convergent sur la science-fiction et les thrillers.`,
-  });
 }

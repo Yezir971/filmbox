@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { mapRowToFilm } from "@/lib/db/mapper";
-import { MOCK_FILMS } from "@/lib/mock-data";
+
+// --no-request: ALTER TABLE films ADD COLUMN IF NOT EXISTS poster_url TEXT, ADD COLUMN IF NOT EXISTS backdrop_url TEXT, ADD COLUMN IF NOT EXISTS synopsis TEXT;
+// --no-request: SELECT f.id, f.titre, f.annee, f.genre, f.details, f.poster_url, f.backdrop_url, f.synopsis FROM films f;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -59,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
-    // Total count
+    // Total count en base
     const countSql = `SELECT COUNT(*) AS total FROM films f ${whereSql};`;
     const countRes = await query(countSql, params);
     const total = parseInt(countRes.rows[0]?.total || "0", 10);
@@ -98,33 +100,10 @@ export async function GET(request: NextRequest) {
       totalPages,
     });
   } catch (error) {
-    console.warn("[API /films] DB query fallback to mock:", error);
-    let filtered = [...MOCK_FILMS];
-    if (genre && genre !== "all") {
-      filtered = filtered.filter((f) => f.genres.some((g) => g.toLowerCase() === genre.toLowerCase()));
-    }
-    if (decade && decade !== "all") {
-      const startYear = parseInt(decade, 10);
-      filtered = filtered.filter((f) => f.releaseYear >= startYear && f.releaseYear < startYear + 10);
-    }
-    if (search) {
-      filtered = filtered.filter(
-        (f) =>
-          f.title.toLowerCase().includes(search) ||
-          f.director.toLowerCase().includes(search) ||
-          f.tags.some((t) => t.toLowerCase().includes(search))
-      );
-    }
-    if (hasOscars) filtered = filtered.filter((f) => f.hasOscars);
-    if (maxDuration) {
-      const maxDur = parseInt(maxDuration, 10);
-      filtered = filtered.filter((f) => f.durationMinutes <= maxDur);
-    }
-    const total = filtered.length;
-    const totalPages = Math.ceil(total / limit) || 1;
-    const startIndex = (page - 1) * limit;
-    const films = filtered.slice(startIndex, startIndex + limit);
-
-    return NextResponse.json({ films, total, page, totalPages });
+    console.error("[API /films] DB query error:", error);
+    return NextResponse.json(
+      { films: [], total: 0, page: 1, totalPages: 1, error: "Erreur de base de données" },
+      { status: 500 }
+    );
   }
 }

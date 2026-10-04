@@ -3,13 +3,13 @@ import type { Liste, ListeDetail } from "@/types/api";
 
 export async function getPublicLists(): Promise<Liste[]> {
   return apiClient<Liste[]>("/api/lists", {
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
 }
 
 export async function getListById(id: string): Promise<ListeDetail> {
   return apiClient<ListeDetail>(`/api/lists/${id}`, {
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
 }
 
@@ -17,6 +17,7 @@ export interface CreateListPayload {
   title: string;
   description: string;
   isPublic: boolean;
+  authorPseudo?: string;
 }
 
 export async function createList(payload: CreateListPayload): Promise<Liste> {

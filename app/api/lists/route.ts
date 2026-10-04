@@ -1,7 +1,11 @@
+// --no-request: ALTER TABLE liste ADD COLUMN IF NOT EXISTS description TEXT;
+// --no-request: ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
-import { MOCK_LISTS } from "@/lib/mock-data";
+import { getMediaForTitle } from "@/lib/db/mapper";
 import type { Liste } from "@/types/api";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -13,7 +17,8 @@ export async function GET() {
         l.membre, 
         l.visibility, 
         l.create_at,
-        COUNT(lf.id) AS film_count
+        COUNT(lf.id) AS film_count,
+        ARRAY_AGG(lf.film ORDER BY lf.position ASC) FILTER (WHERE lf.film IS NOT NULL) AS films
       FROM liste l
       LEFT JOIN liste_film lf ON lf.liste_id = l.id
       WHERE l.visibility = 'public'
@@ -23,37 +28,38 @@ export async function GET() {
 
     const res = await query(sql);
 
-    if (res.rows.length > 0) {
-      const lists: Liste[] = res.rows.map((row: any) => ({
+    const lists: Liste[] = res.rows.map((row: any) => {
+      const filmTitles: string[] = Array.isArray(row.films) ? row.films.slice(0, 4) : [];
+      const coverPosters = filmTitles.map((t) => getMediaForTitle(t).poster);
+
+      return {
         id: String(row.id),
         title: row.titre,
         description: `Collection créée par ${row.membre}`,
         authorPseudo: row.membre,
-        authorAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+        authorAvatarUrl: "",
         filmCount: parseInt(row.film_count || "0", 10),
         isPublic: row.visibility === "public",
-        coverPosters: [
+        coverPosters: coverPosters.length > 0 ? coverPosters : [
           "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&auto=format&fit=crop&q=80",
           "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400&auto=format&fit=crop&q=80",
         ],
         createdAt: new Date(row.create_at).toISOString(),
         updatedAt: new Date(row.create_at).toISOString(),
-      }));
+      };
+    });
 
-      return NextResponse.json(lists);
-    }
+    return NextResponse.json(lists);
   } catch (err) {
-    console.warn("[API /lists] DB query fallback:", err);
+    console.error("[API /lists] DB error:", err);
+    return NextResponse.json({ error: "Erreur lors de la récupération des listes" }, { status: 500 });
   }
-
-  const publicLists: Liste[] = MOCK_LISTS.map(({ items, ...rest }) => rest);
-  return NextResponse.json(publicLists);
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const membre = body.authorPseudo || "yoda";
+    const membre = body.authorPseudo || "cinephile_92";
     const titre = body.title || "Ma Liste FilmBox";
     const visibility = body.isPublic ? "public" : "privé";
 
@@ -72,7 +78,7 @@ export async function POST(request: NextRequest) {
       title: row.titre,
       description: body.description || "",
       authorPseudo: row.membre,
-      authorAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+      authorAvatarUrl: "",
       filmCount: 0,
       isPublic: row.visibility === "public",
       coverPosters: [],
@@ -82,20 +88,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newList, { status: 201 });
   } catch (err) {
-    console.warn("[API POST /lists] DB query fallback:", err);
-    const body = await request.json().catch(() => ({}));
-    const newList: Liste = {
-      id: `list-${Date.now()}`,
-      title: body.title || "Nouvelle liste",
-      description: body.description || "",
-      authorPseudo: "Alice",
-      authorAvatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
-      filmCount: 0,
-      isPublic: Boolean(body.isPublic),
-      coverPosters: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    return NextResponse.json(newList, { status: 201 });
+    console.error("[API POST /lists] DB error:", err);
+    return NextResponse.json({ error: "Impossible de créer la liste" }, { status: 500 });
   }
 }

@@ -11,22 +11,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FilmCard } from "@/components/films/FilmCard";
 import { HomeHeroEntrance } from "@/components/home/HomeHeroEntrance";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  let stats: DashboardStats;
+  let stats: DashboardStats = {
+    trendingFilms: [],
+    recentCommunityJournal: [],
+    topRankingsPreview: [],
+    totalCommunityLogsToday: 0,
+  };
   try {
-    stats = await apiClient<DashboardStats>("/api/stats", {
-      next: { revalidate: 60 },
-    });
-  } catch {
-    const filmsRes = await getFilms({ limit: 4 });
-    stats = {
-      trendingFilms: filmsRes.films,
-      recentCommunityJournal: [],
-      topRankingsPreview: filmsRes.films.slice(0, 3),
-      totalCommunityLogsToday: 850,
-    };
+    stats = await apiClient<DashboardStats>("/api/stats");
+  } catch (err) {
+    console.warn("HomePage fetch stats failed:", err);
   }
 
   let topGenres: RankingGenre[] = [];

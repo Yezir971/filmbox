@@ -1,8 +1,11 @@
+// --no-request: ALTER TABLE films ADD COLUMN IF NOT EXISTS poster_url TEXT, ADD COLUMN IF NOT EXISTS backdrop_url TEXT, ADD COLUMN IF NOT EXISTS synopsis TEXT;
+// --no-request: ALTER TABLE journal ADD COLUMN IF NOT EXISTS commentaire TEXT, ADD COLUMN IF NOT EXISTS rewatch BOOLEAN DEFAULT false;
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { mapRowToFilm, getMediaForTitle } from "@/lib/db/mapper";
-import { MOCK_FILMS, MOCK_JOURNAL } from "@/lib/mock-data";
 import type { DashboardStats, JournalEntry } from "@/types/api";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -21,7 +24,7 @@ export async function GET() {
       FROM notes n 
       INNER JOIN films f ON f.id = n.film_id 
       GROUP BY f.id, f.titre, f.annee, f.genre, f.details 
-      HAVING COUNT(n.film_id) >= 3 
+      HAVING COUNT(n.film_id) >= 1 
       ORDER BY moyenne DESC 
       LIMIT 6;
     `;
@@ -62,26 +65,18 @@ export async function GET() {
     // 3. Décompte global des visionnages
     const countSql = `SELECT COUNT(*) AS total FROM journal;`;
     const countRes = await query(countSql);
-    const totalCommunityLogsToday = parseInt(countRes.rows[0]?.total || "208", 10);
+    const totalCommunityLogsToday = parseInt(countRes.rows[0]?.total || "0", 10);
 
     const stats: DashboardStats = {
-      trendingFilms: trendingFilms.length > 0 ? trendingFilms : MOCK_FILMS.slice(0, 4),
-      recentCommunityJournal: recentCommunityJournal.length > 0 ? recentCommunityJournal : MOCK_JOURNAL,
+      trendingFilms,
+      recentCommunityJournal,
       topRankingsPreview: trendingFilms.slice(0, 3),
       totalCommunityLogsToday,
     };
 
     return NextResponse.json(stats);
   } catch (err) {
-    console.warn("[API /stats] DB query fallback:", err);
+    console.error("[API /stats] DB error:", err);
+    return NextResponse.json({ error: "Erreur lors de la récupération des statistiques" }, { status: 500 });
   }
-
-  const stats: DashboardStats = {
-    trendingFilms: MOCK_FILMS.slice(0, 4),
-    recentCommunityJournal: MOCK_JOURNAL,
-    topRankingsPreview: [MOCK_FILMS[1], MOCK_FILMS[0], MOCK_FILMS[4]],
-    totalCommunityLogsToday: 1342,
-  };
-
-  return NextResponse.json(stats);
 }

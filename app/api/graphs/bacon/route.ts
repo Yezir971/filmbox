@@ -1,3 +1,5 @@
+// --no-request: ALTER TABLE personnes ADD COLUMN IF NOT EXISTS photo_url TEXT;
+// --no-request: ALTER TABLE films ADD COLUMN IF NOT EXISTS poster_url TEXT;
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { getMediaForTitle } from "@/lib/db/mapper";
@@ -28,7 +30,7 @@ export async function GET(request: NextRequest) {
               p_suivant.nom,
               cb.distance + 1, 
               cb.acteurs_visites || p_suivant.id, 
-              cb.etapes || jsonb_build_object('film', f.titre, 'film_id', f.id, 'actor', p_suivant.nom, 'actor_id', p_suivant.id)
+              cb.etapes || jsonb_build_object('film', f.titre, 'film_id', f.id, 'annee', f.annee, 'actor', p_suivant.nom, 'actor_id', p_suivant.id)
           FROM chemin_bacon cb
           JOIN casting c1 ON cb.acteur_id = c1.personne_id AND c1.role = 'acteur'
           JOIN films f ON c1.film_id = f.id
@@ -51,7 +53,7 @@ export async function GET(request: NextRequest) {
       const distance = parseInt(row.distance, 10);
       const etapes = Array.isArray(row.etapes) ? row.etapes : [];
 
-      const path = etapes.map((step: any, idx: number) => {
+      const path = etapes.map((step: any) => {
         const media = step.film ? getMediaForTitle(step.film) : null;
         return {
           actor: {
@@ -63,7 +65,7 @@ export async function GET(request: NextRequest) {
             ? {
                 id: String(step.film_id),
                 title: step.film,
-                releaseYear: 2011,
+                releaseYear: step.annee || 2010,
                 posterUrl: media?.poster || "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80",
               }
             : {
@@ -84,42 +86,16 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json(baconPath);
     }
-  } catch (err) {
-    console.warn("[API /graphs/bacon] DB query fallback:", err);
-  }
 
-  // Fallback
-  return NextResponse.json({
-    sourceActor: source,
-    targetActor: target,
-    degreesOfSeparation: 2,
-    path: [
-      {
-        actor: {
-          id: "act-1",
-          name: source,
-          photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80",
-        },
-        film: {
-          id: "1",
-          title: "Inception",
-          releaseYear: 2010,
-          posterUrl: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80",
-        },
-      },
-      {
-        actor: {
-          id: "act-2",
-          name: target,
-          photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
-        },
-        film: {
-          id: "film-x",
-          title: "Mystic River",
-          releaseYear: 2003,
-          posterUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop&q=80",
-        },
-      },
-    ],
-  });
+    return NextResponse.json(
+      { error: `Aucun lien cinéphile trouvé entre "${source}" et "${target}" dans la base de données.` },
+      { status: 404 }
+    );
+  } catch (err) {
+    console.error("[API /graphs/bacon] DB error:", err);
+    return NextResponse.json(
+      { error: "Erreur lors du calcul du chemin Bacon" },
+      { status: 500 }
+    );
+  }
 }

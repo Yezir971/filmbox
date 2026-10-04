@@ -1,7 +1,8 @@
+// --no-request: ALTER TABLE utilisateurs ADD COLUMN IF NOT EXISTS avatar_url TEXT, ADD COLUMN IF NOT EXISTS bio TEXT, ADD COLUMN IF NOT EXISTS email VARCHAR(120);
+// --no-request: ALTER TABLE films ADD COLUMN IF NOT EXISTS poster_url TEXT;
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { getMediaForTitle } from "@/lib/db/mapper";
-import { MOCK_PROFILE } from "@/lib/mock-data";
 import type { Profil } from "@/types/api";
 
 export async function GET(
@@ -36,7 +37,7 @@ export async function GET(
           LIMIT 1
       ), 
       coup_de_coeur AS (
-          SELECT f.id AS film_id, f.titre AS film_coup_de_coeur
+          SELECT f.id AS film_id, f.titre AS film_coup_de_coeur, f.annee AS coup_de_coeur_annee
           FROM notes n
           JOIN cible c ON n.utilisateur_id = c.id
           JOIN films f ON n.film_id = f.id
@@ -53,7 +54,8 @@ export async function GET(
           COALESCE(sn.note_moyenne, 0) AS note_moyenne, 
           COALESCE(gt.genre_prefere, 'Cinéma') AS genre_prefere,
           cdc.film_coup_de_coeur,
-          cdc.film_id AS coup_de_coeur_id
+          cdc.film_id AS coup_de_coeur_id,
+          cdc.coup_de_coeur_annee
       FROM cible c
       LEFT JOIN nb_notes nbn ON true
       LEFT JOIN stat_note sn ON true
@@ -63,71 +65,47 @@ export async function GET(
 
     const res = await query(sql, [pseudo]);
 
-    if (res.rows.length > 0) {
-      const row = res.rows[0];
-
-      // Récupérer le nombre de visionnages dans le journal
-      const journalCountSql = `
-        SELECT COUNT(*) AS total_screenings,
-               COALESCE(SUM((f.details ->> 'duree')::INTEGER), 0) AS total_minutes
-        FROM journal j
-        JOIN films f ON f.id = j.film_id
-        WHERE j.utilisateur_id = $1;
-      `;
-      const journalRes = await query(journalCountSql, [row.id]);
-      const totalScreenings = parseInt(journalRes.rows[0]?.total_screenings || "0", 10);
-      const totalMinutes = parseInt(journalRes.rows[0]?.total_minutes || "0", 10);
-
-      // Récupérer les 3 derniers films favoris
-      const favSql = `
-        SELECT f.id, f.titre, f.annee, f.genre, n.note
-        FROM notes n
-        JOIN films f ON f.id = n.film_id
-        WHERE n.utilisateur_id = $1
-        ORDER BY n.note DESC, n.note_le ASC
-        LIMIT 4;
-      `;
-      const favRes = await query(favSql, [row.id]);
-      const favoriteFilms = favRes.rows.map((f: any) => {
-        const media = getMediaForTitle(f.titre);
-        return {
-          id: String(f.id),
-          title: f.titre,
-          releaseYear: f.annee,
-          director: "Classique",
-          posterUrl: media.poster,
-          rating: parseFloat(f.note),
-        };
-      });
-
-      const profile: Profil = {
-        id: String(row.id),
-        pseudo: row.pseudo,
-        avatarUrl: `https://images.unsplash.com/photo-${1534528741775 + (row.id * 1000)}?w=400&auto=format&fit=crop&q=80`,
-        bio: `Cinéphile passionné de ${row.genre_prefere}.`,
-        favoriteFilm: row.film_coup_de_coeur ? {
-          id: String(row.coup_de_coeur_id || "1"),
-          title: row.film_coup_de_coeur,
-          posterUrl: getMediaForTitle(row.film_coup_de_coeur).poster,
-          releaseYear: 1995,
-        } : undefined,
-        favoriteGenre: row.genre_prefere,
-        stats: {
-          totalFilmsWatched: totalScreenings || parseInt(row.nb_films_notes, 10),
-          totalHoursWatched: Math.round(totalMinutes / 60) || 54,
-          averageRatingGiven: parseFloat(row.note_moyenne) || 4.2,
-          totalReviews: parseInt(row.nb_films_notes, 10) || 24,
-        },
-      };
-
-      return NextResponse.json(profile);
+    if (!res.rows || res.rows.length === 0 || !res.rows[0].id) {
+      return NextResponse.json({ error: `Utilisateur "${pseudo}" non trouvé` }, { status: 404 });
     }
-  } catch (err) {
-    console.warn(`[API /users/${params.pseudo}] DB query fallback:`, err);
-  }
 
-  return NextResponse.json({
-    ...MOCK_PROFILE,
-    pseudo,
-  });
+    const row = res.rows[0];
+
+    // Récupérer le nombre de visionnages dans le journal
+    const journalCountSql = `
+      SELECT COUNT(*) AS total_screenings,
+             COALESCE(SUM((f.details ->> 'duree')::INTEGER), 0) AS total_minutes
+      FROM journal j
+      JOIN films f ON f.id = j.film_id
+      WHERE j.utilisateur_id = $1;
+    `;
+    const journalRes = await query(journalCountSql, [row.id]);
+    const totalScreenings = parseInt(journalRes.rows[0]?.total_screenings || "0", 10);
+    const totalMinutes = parseInt(journalRes.rows[0]?.total_minutes || "0", 10);
+
+    const profile: Profil = {
+      id: String(row.id),
+      pseudo: row.pseudo,
+      avatarUrl: "",
+      bio: `Cinéphile passionné de ${row.genre_prefere}.`,
+      favoriteFilm: row.film_coup_de_coeur ? {
+        id: String(row.coup_de_coeur_id),
+        title: row.film_coup_de_coeur,
+        posterUrl: getMediaForTitle(row.film_coup_de_coeur).poster,
+        releaseYear: row.coup_de_coeur_annee || 2000,
+      } : undefined,
+      favoriteGenre: row.genre_prefere,
+      stats: {
+        totalFilmsWatched: totalScreenings || parseInt(row.nb_films_notes, 10),
+        totalHoursWatched: Math.round(totalMinutes / 60),
+        averageRatingGiven: parseFloat(row.note_moyenne) || 0,
+        totalReviews: parseInt(row.nb_films_notes, 10) || 0,
+      },
+    };
+
+    return NextResponse.json(profile);
+  } catch (err) {
+    console.error(`[API /users/${params.pseudo}] DB error:`, err);
+    return NextResponse.json({ error: "Erreur serveur lors de la récupération du profil" }, { status: 500 });
+  }
 }

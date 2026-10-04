@@ -36,7 +36,7 @@ export function FilmCard({ film, priority = false }: FilmCardProps) {
           )}
           <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-sm text-xs font-bold text-gold-400 flex items-center gap-1 shadow">
             <Star className="h-3 w-3 fill-current" />
-            {film.weightedRating.toFixed(1)}
+            {Number(film.weightedRating ?? 0).toFixed(1)}
           </div>
         </div>
 

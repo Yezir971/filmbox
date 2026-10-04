@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Film, Compass, Trophy, Bookmark, User, Clapperboard, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth/useSession";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 const navLinks = [
   { href: "/", label: "Accueil", icon: Clapperboard },
@@ -73,11 +74,9 @@ export function Navbar() {
           {isAuthenticated && user ? (
             <Link
               href={`/profil/${user.pseudo}`}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/80 bg-secondary/60 hover:border-primary/40 transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/80 bg-secondary/60 hover:border-gold-500/40 transition-colors"
             >
-              <div className="h-6 w-6 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-xs font-semibold text-primary">
-                {user.pseudo.slice(0, 1).toUpperCase()}
-              </div>
+              <UserAvatar size="sm" pseudo={user.pseudo} avatarUrl={user.avatarUrl} />
               <span className="text-sm font-medium text-foreground">
                 {user.pseudo}
               </span>

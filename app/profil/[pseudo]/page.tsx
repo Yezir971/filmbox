@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getUserProfile, getUserJournal } from "@/lib/api/users";
 import { CompatibilityWidget } from "@/components/profile/CompatibilityWidget";
 import { BaconPathViewer } from "@/components/gsap/BaconPathViewer";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Film, Star, Clock, Calendar, Heart, Award, Eye, Hourglass } from "lucide-react";
@@ -56,16 +57,12 @@ export default async function ProfilPage({
       {/* Profile Header */}
       <section className="relative rounded-3xl overflow-hidden border border-border/80 bg-gradient-to-b from-card to-background p-6 sm:p-10 shadow-2xl">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          <div className="relative h-28 w-28 rounded-full overflow-hidden border-2 border-primary/50 shadow-xl shrink-0 bg-secondary">
-            <Image
-              src={profile.avatarUrl}
-              alt={`Avatar de ${profile.pseudo}`}
-              fill
-              priority
-              sizes="112px"
-              className="object-cover"
-            />
-          </div>
+          <UserAvatar
+            size="xl"
+            pseudo={profile.pseudo}
+            avatarUrl={profile.avatarUrl}
+            className="border-2 border-primary/50 shadow-xl"
+          />
 
           <div className="space-y-3 text-center sm:text-left flex-1">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">

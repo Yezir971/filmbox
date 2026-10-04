@@ -1,8 +1,10 @@
+// --no-request: ALTER TABLE films ADD COLUMN IF NOT EXISTS poster_url TEXT, ADD COLUMN IF NOT EXISTS backdrop_url TEXT, ADD COLUMN IF NOT EXISTS synopsis TEXT;
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { mapRowToFilm } from "@/lib/db/mapper";
-import { MOCK_RANKING_GENRES } from "@/lib/mock-data";
 import type { RankingGenre } from "@/types/api";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -50,26 +52,23 @@ export async function GET() {
 
     const res = await query(sql);
 
-    if (res.rows.length > 0) {
-      const grouped: Record<string, any[]> = {};
-      for (const row of res.rows) {
-        if (!grouped[row.genre]) grouped[row.genre] = [];
-        grouped[row.genre].push(mapRowToFilm(row));
-      }
-
-      const rankingGenres: RankingGenre[] = Object.entries(grouped).map(
-        ([genre, topFilms]) => ({
-          genre,
-          topFilms,
-          totalFilmsInGenre: topFilms.length,
-        })
-      );
-
-      return NextResponse.json(rankingGenres);
+    const grouped: Record<string, any[]> = {};
+    for (const row of res.rows) {
+      if (!grouped[row.genre]) grouped[row.genre] = [];
+      grouped[row.genre].push(mapRowToFilm(row));
     }
-  } catch (err) {
-    console.warn("[API /rankings/genres] DB query fallback:", err);
-  }
 
-  return NextResponse.json(MOCK_RANKING_GENRES);
+    const rankingGenres: RankingGenre[] = Object.entries(grouped).map(
+      ([genre, topFilms]) => ({
+        genre,
+        topFilms,
+        totalFilmsInGenre: topFilms.length,
+      })
+    );
+
+    return NextResponse.json(rankingGenres);
+  } catch (err) {
+    console.error("[API /rankings/genres] DB query error:", err);
+    return NextResponse.json([], { status: 500 });
+  }
 }

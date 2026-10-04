@@ -1,7 +1,8 @@
+// --no-request: ALTER TABLE films ADD COLUMN IF NOT EXISTS poster_url TEXT, ADD COLUMN IF NOT EXISTS backdrop_url TEXT, ADD COLUMN IF NOT EXISTS synopsis TEXT;
+// --no-request: ALTER TABLE personnes ADD COLUMN IF NOT EXISTS photo_url TEXT;
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { mapRowToFilm } from "@/lib/db/mapper";
-import { MOCK_SUGGESTIONS } from "@/lib/mock-data";
 import type { Suggestion } from "@/types/api";
 
 export async function GET(
@@ -42,18 +43,15 @@ export async function GET(
 
     const res = await query(sql, [pseudo]);
 
-    if (res.rows.length > 0) {
-      const suggestions: Suggestion[] = res.rows.map((row: any, idx: number) => ({
-        film: mapRowToFilm(row),
-        matchScore: Math.max(75, 98 - idx * 2),
-        reason: `Recommandé selon vos goûts en ${row.genre} (${row.realisateurs || "Culte"})`,
-      }));
+    const suggestions: Suggestion[] = res.rows.map((row: any, idx: number) => ({
+      film: mapRowToFilm(row),
+      matchScore: Math.max(75, 98 - idx * 2),
+      reason: `Recommandé selon vos goûts en ${row.genre} (${row.realisateurs || "Culte"})`,
+    }));
 
-      return NextResponse.json(suggestions);
-    }
+    return NextResponse.json(suggestions);
   } catch (err) {
-    console.warn(`[API /users/${params.pseudo}/suggestions] DB query fallback:`, err);
+    console.error(`[API /users/${params.pseudo}/suggestions] DB error:`, err);
+    return NextResponse.json({ error: "Erreur lors de la récupération des suggestions" }, { status: 500 });
   }
-
-  return NextResponse.json(MOCK_SUGGESTIONS);
 }

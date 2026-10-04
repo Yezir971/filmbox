@@ -6,9 +6,11 @@ import { getListById } from "@/lib/api/lists";
 import { AddFilmToList } from "@/components/lists/AddFilmToList";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Star, ChevronLeft, Calendar, User, Film, Clock } from "lucide-react";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function generateMetadata({
   params,
@@ -77,7 +79,7 @@ export default async function ListeDetailPage({
 
         <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-2 border-t border-border/40">
           <span className="flex items-center gap-1.5 font-medium text-foreground">
-            <User className="h-3.5 w-3.5 text-primary" />
+            <UserAvatar size="sm" pseudo={list.authorPseudo} avatarUrl={list.authorAvatarUrl} className="h-4 w-4" />
             Par {list.authorPseudo}
           </span>
           <span className="flex items-center gap-1">

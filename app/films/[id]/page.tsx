@@ -1,18 +1,21 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getFilmById, getFilmSaga } from "@/lib/api/films";
+import { getSession } from "@/lib/session";
 import { SplitTitle } from "@/components/gsap/SplitTitle";
 import { SmokingRoomCanvas } from "@/components/gsap/SmokingRoomCanvas";
 import { SagaTimeline } from "@/components/gsap/SagaTimeline";
 import { RatingStars } from "@/components/gsap/RatingStars";
+import { FilmRatingBadge } from "@/components/films/FilmRatingBadge";
 import { JournalButton } from "@/components/gsap/JournalButton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, Clock, Calendar, Award, User, Clapperboard, ChevronLeft, Globe, Film } from "lucide-react";
-
-export const revalidate = 300;
 
 export async function generateMetadata({
   params,
@@ -50,9 +53,10 @@ export default async function FicheFilmPage({
 }: {
   params: { id: string };
 }) {
+  const session = await getSession();
   let film;
   try {
-    film = await getFilmById(params.id);
+    film = await getFilmById(params.id, session?.user?.pseudo);
   } catch {
     notFound();
   }
@@ -161,13 +165,11 @@ export default async function FicheFilmPage({
                   <Clock className="h-3.5 w-3.5" />
                   {film.durationFormatted}
                 </span>
-                <span className="flex items-center gap-1 font-bold text-gold-400 text-sm">
-                  <Star className="h-4 w-4 fill-current" />
-                  {film.weightedRating.toFixed(1)} / 5
-                  <span className="text-muted-foreground text-xs font-normal">
-                    ({film.ratingsCount.toLocaleString()} votes)
-                  </span>
-                </span>
+                <FilmRatingBadge
+                  filmId={film.id}
+                  initialWeightedRating={film.weightedRating}
+                  initialRatingsCount={film.ratingsCount}
+                />
               </div>
             </div>
 

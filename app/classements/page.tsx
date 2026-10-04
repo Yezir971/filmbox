@@ -7,16 +7,28 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Star, ThumbsUp, ThumbsDown, User, Film, Clapperboard } from "lucide-react";
 
+import type { RankingGenre, RankingDirector, PolarizingFilm } from "@/types/api";
+
 export const metadata: Metadata = {
   title: "Classements & Palmarès Cinéphiles",
   description:
     "Découvrez les meilleurs films par genre, le classement des plus grands réalisateurs et le baromètre des films les plus clivants.",
 };
 
-export const revalidate = 3600; // 1h cache
+export const dynamic = "force-dynamic";
 
 export default async function ClassementsPage() {
-  const { genres, directors, polarizing } = await getAllRankings();
+  let rankings: {
+    genres: RankingGenre[];
+    directors: RankingDirector[];
+    polarizing: PolarizingFilm[];
+  } = { genres: [], directors: [], polarizing: [] };
+  try {
+    rankings = await getAllRankings();
+  } catch (err) {
+    console.warn("ClassementsPage fetch rankings failed:", err);
+  }
+  const { genres, directors, polarizing } = rankings;
 
   return (
     <div className="space-y-10 pb-16">

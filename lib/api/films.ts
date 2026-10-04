@@ -16,20 +16,21 @@ export interface GetFilmsParams {
 export async function getFilms(params?: GetFilmsParams): Promise<{ films: Film[]; total: number; page: number; totalPages: number }> {
   return apiClient<{ films: Film[]; total: number; page: number; totalPages: number }>("/api/films", {
     params: params as Record<string, string | number | boolean | undefined>,
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
 }
 
-export async function getFilmById(id: string): Promise<FicheFilm> {
+export async function getFilmById(id: string, userPseudo?: string): Promise<FicheFilm> {
   return apiClient<FicheFilm>(`/api/films/${id}`, {
-    next: { revalidate: 300 },
+    params: userPseudo ? { pseudo: userPseudo } : undefined,
+    cache: "no-store",
   });
 }
 
 export async function getFilmSaga(id: string): Promise<{ sagaId: string; sagaName: string; episodes: SagaEpisode[] } | null> {
   try {
     return await apiClient<{ sagaId: string; sagaName: string; episodes: SagaEpisode[] }>(`/api/films/${id}/saga`, {
-      next: { revalidate: 300 },
+      cache: "no-store",
     });
   } catch {
     return null;

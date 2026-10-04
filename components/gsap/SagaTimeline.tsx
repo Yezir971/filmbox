@@ -127,10 +127,10 @@ export function SagaTimeline({
                   {episode.title}
                 </h3>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{episode.releaseYear} • {episode.durationFormatted}</span>
+                  <span>{episode.releaseYear} • {episode.durationFormatted || "2h 00m"}</span>
                   <span className="flex items-center gap-1 font-semibold text-gold-400">
                     <Star className="h-3 w-3 fill-current" />
-                    {episode.weightedRating.toFixed(1)}
+                    {Number(episode.weightedRating ?? 0).toFixed(1)}
                   </span>
                 </div>
               </div>

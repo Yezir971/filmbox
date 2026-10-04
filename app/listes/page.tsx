@@ -6,6 +6,7 @@ import type { Liste } from "@/types/api";
 import { CreateListDialog } from "@/components/lists/CreateListDialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Film, User, Bookmark, Calendar } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -14,7 +15,8 @@ export const metadata: Metadata = {
     "Explorez les sélections thématiques créées par notre communauté de cinéphiles. Sagas, pépites cachées, et palmarès personnels.",
 };
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function ListesPage() {
   let lists: Liste[] = [];
@@ -92,19 +94,12 @@ export default async function ListesPage() {
 
                 <div className="flex items-center justify-between pt-3 border-t border-border/40 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <div className="relative h-5 w-5 rounded-full overflow-hidden bg-secondary border border-border">
-                      {list.authorAvatarUrl ? (
-                        <Image
-                          src={list.authorAvatarUrl}
-                          alt={list.authorPseudo}
-                          fill
-                          sizes="20px"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <User className="h-3 w-3 m-auto" />
-                      )}
-                    </div>
+                    <UserAvatar
+                      size="sm"
+                      pseudo={list.authorPseudo}
+                      avatarUrl={list.authorAvatarUrl}
+                      className="h-5 w-5"
+                    />
                     <span className="font-medium text-foreground">
                       {list.authorPseudo}
                     </span>

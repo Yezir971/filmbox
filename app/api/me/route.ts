@@ -11,7 +11,7 @@ export async function GET() {
           id: String(user.id),
           pseudo: user.pseudo,
           email: `${user.pseudo}@filmbox.cinema`,
-          avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+          avatarUrl: "",
         },
       });
     }
@@ -24,7 +24,7 @@ export async function GET() {
       id: "1",
       pseudo: "cinephile_92",
       email: "cinephile_92@filmbox.cinema",
-      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
+      avatarUrl: "",
     },
   });
 }

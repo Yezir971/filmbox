@@ -18,14 +18,27 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useSession } from "@/lib/auth/useSession";
 import { addFilmToList } from "@/lib/api/lists";
-import { MOCK_FILMS } from "@/lib/mock-data";
+import { getFilms } from "@/lib/api/films";
+import useSWR from "swr";
+import type { Film } from "@/types/api";
 
 export function AddFilmToList({ listId }: { listId: string }) {
   const router = useRouter();
   const { isAuthenticated } = useSession();
   const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
-  const [selectedFilmId, setSelectedFilmId] = React.useState(MOCK_FILMS[0].id);
+  const { data: filmsData } = useSWR<{ films: Film[] }>("/api/films?limit=50", () =>
+    getFilms({ limit: 50 })
+  );
+  const films = filmsData?.films || [];
+  const [selectedFilmId, setSelectedFilmId] = React.useState<string>("");
+
+  React.useEffect(() => {
+    if (films.length > 0 && !selectedFilmId) {
+      setSelectedFilmId(films[0].id);
+    }
+  }, [films, selectedFilmId]);
+
   const [comment, setComment] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
@@ -87,7 +100,7 @@ export function AddFilmToList({ listId }: { listId: string }) {
               onChange={(e) => setSelectedFilmId(e.target.value)}
               aria-label="Sélectionner un film"
             >
-              {MOCK_FILMS.map((f) => (
+              {films.map((f) => (
                 <option key={f.id} value={f.id}>
                   {f.title} ({f.releaseYear}) — {f.director}
                 </option>

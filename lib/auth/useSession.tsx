@@ -8,9 +8,16 @@ interface SessionContextType {
   isAuthenticated: boolean;
 }
 
+const DEFAULT_USER: Session["user"] = {
+  id: "1",
+  pseudo: "cinephile_92",
+  email: "cinephile_92@filmbox.cinema",
+  avatarUrl: "",
+};
+
 const SessionContext = React.createContext<SessionContextType>({
-  user: null,
-  isAuthenticated: false,
+  user: DEFAULT_USER,
+  isAuthenticated: true,
 });
 
 export function SessionProvider({
@@ -20,12 +27,25 @@ export function SessionProvider({
   initialSession: Session;
   children: React.ReactNode;
 }) {
+  const [session, setSession] = React.useState<Session>(
+    initialSession?.user ? initialSession : { user: DEFAULT_USER }
+  );
+
+  React.useEffect(() => {
+    fetch("/api/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user) setSession(data);
+      })
+      .catch(() => {});
+  }, []);
+
   const value = React.useMemo<SessionContextType>(
     () => ({
-      user: initialSession?.user ?? null,
-      isAuthenticated: Boolean(initialSession?.user),
+      user: session?.user ?? DEFAULT_USER,
+      isAuthenticated: Boolean(session?.user ?? DEFAULT_USER),
     }),
-    [initialSession]
+    [session]
   );
 
   return (

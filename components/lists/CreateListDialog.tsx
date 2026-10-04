@@ -21,7 +21,7 @@ import { createList } from "@/lib/api/lists";
 
 export function CreateListDialog() {
   const router = useRouter();
-  const { isAuthenticated } = useSession();
+  const { isAuthenticated, user } = useSession();
   const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
   const [title, setTitle] = React.useState("");
@@ -41,6 +41,7 @@ export function CreateListDialog() {
         title,
         description,
         isPublic,
+        authorPseudo: user?.pseudo || "cinephile_92",
       });
 
       toast({
