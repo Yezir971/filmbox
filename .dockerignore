@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.gitignore
+*.log
+.env*.local
+*.md
+docker-compose*.yaml
+Dockerfile*
+database
+
+llms.txt
+AGENT.md
+ARCHITECTURE.md
+CHANGELOG.md
+TASK.md

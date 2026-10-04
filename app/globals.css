@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 6.5%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 6.5%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Doré cinéma / Projecteur : hsl(38, 78%, 56%) */
+    --primary: 38 78% 56%;
+    --primary-foreground: 240 10% 4%;
+
+    --secondary: 240 6% 14%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 6% 15%;
+    --muted-foreground: 240 5% 68%;
+
+    /* Rouge velours de salle obscure : hsl(348, 72%, 42%) */
+    --accent: 348 72% 42%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 348 75% 45%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 6% 18%;
+    --input: 240 6% 18%;
+    --ring: 38 78% 56%;
+
+    --radius: 0.625rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/30 selection:text-primary;
+    background-color: #070709;
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(229, 169, 60, 0.08), transparent 70%),
+      radial-gradient(circle at 100% 100%, rgba(139, 24, 43, 0.05), transparent 40%);
+    min-height: 100vh;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #09090d;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #252530;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #e5a93c88;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
