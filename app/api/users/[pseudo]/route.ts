@@ -18,6 +18,7 @@ export async function GET(
           SELECT id, pseudo 
           FROM utilisateurs 
           WHERE LOWER(pseudo) = LOWER($1)
+          LIMIT 1
       ), 
       nb_notes AS (
           SELECT COUNT(DISTINCT n.film_id) AS nb_films_notes 

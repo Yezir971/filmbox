@@ -12,8 +12,11 @@ export async function GET(
   const pseudo = decodeURIComponent(params.pseudo || "cinephile_92");
 
   try {
-    // Requête 6.4 de exo.sql : Journal avec calcul fenêtré LAG() des jours écoulés
+    // Requête 6.4 de exo.sql : Journal optimisé (exploite idx_journal_utilisateur_date - M12.1)
     const sql = `
+      WITH user_target AS (
+          SELECT id FROM utilisateurs WHERE LOWER(pseudo) = LOWER($1) LIMIT 1
+      )
       SELECT 
           j.id,
           j.date_visionnage,
@@ -21,11 +24,10 @@ export async function GET(
           f.titre,
           n.note,
           j.date_visionnage - LAG(j.date_visionnage) OVER (ORDER BY j.date_visionnage) AS jours_depuis_precedent
-      FROM journal j
-      JOIN utilisateurs u ON j.utilisateur_id = u.id
+      FROM user_target ut
+      JOIN journal j ON j.utilisateur_id = ut.id
       JOIN films f ON j.film_id = f.id
-      LEFT JOIN notes n ON n.film_id = f.id AND n.utilisateur_id = u.id
-      WHERE LOWER(u.pseudo) = LOWER($1)
+      LEFT JOIN notes n ON n.film_id = f.id AND n.utilisateur_id = ut.id
       ORDER BY j.date_visionnage DESC;
     `;
 

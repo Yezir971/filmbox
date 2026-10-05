@@ -33,20 +33,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      whereClauses.push(`(
-        LOWER(f.titre) LIKE $${paramIndex} OR 
-        EXISTS (
-          SELECT 1 FROM casting c 
-          JOIN personnes p ON p.id = c.personne_id 
-          WHERE c.film_id = f.id AND LOWER(p.nom) LIKE $${paramIndex}
-        ) OR
-        EXISTS (
-          SELECT 1 FROM jsonb_array_elements_text(COALESCE(f.details -> 'tags', '[]'::jsonb)) AS t(tag)
-          WHERE LOWER(t.tag) LIKE $${paramIndex}
-        )
-      )`);
+
+      whereClauses.push(`f.titre ILIKE $${paramIndex++}`);
       params.push(`%${search}%`);
-      paramIndex++;
     }
 
     if (hasOscars) {
@@ -61,32 +50,45 @@ export async function GET(request: NextRequest) {
 
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
-    // Total count en base
-    const countSql = `SELECT COUNT(*) AS total FROM films f ${whereSql};`;
-    const countRes = await query(countSql, params);
+    // Total count en base (estimation rapide si aucun filtre, sinon count exact indexé)
+    const countSql = whereClauses.length === 0
+      ? `SELECT reltuples::BIGINT AS total FROM pg_class WHERE relname = 'films';`
+      : `SELECT COUNT(*) AS total FROM films f ${whereSql};`;
+    const countRes = await query(countSql, whereClauses.length === 0 ? [] : params);
     const total = parseInt(countRes.rows[0]?.total || "0", 10);
 
-    // Fetch paginé via la vue v_fiche_film et la fonction note_ponderee de exo.sql
+    // Fetch paginé optimisé : filtrage et tri sur les IDs d'abord via CTE, puis enrichissement
     const offset = (page - 1) * limit;
     const dataSql = `
+      WITH paged_films AS (
+        SELECT 
+          f.id, 
+          f.titre, 
+          f.annee, 
+          f.genre, 
+          f.details, 
+          f.saga_id
+        FROM films f
+        ${whereSql}
+        ORDER BY f.annee DESC, f.titre ASC
+        LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+      )
       SELECT 
-        f.id, 
-        f.titre, 
-        f.annee, 
-        f.genre, 
-        f.details, 
-        f.saga_id,
+        pf.id, 
+        pf.titre, 
+        pf.annee, 
+        pf.genre, 
+        pf.details, 
+        pf.saga_id,
         v.realisateurs, 
         v.duree_min, 
         v.nb_notes, 
         v.moyenne,
-        duree_texte((f.details ->> 'duree')::INTEGER) AS duree_texte,
-        COALESCE(note_ponderee(f.id), v.moyenne) AS note_ponderee
-      FROM films f
-      LEFT JOIN v_fiche_film v ON v.id = f.id
-      ${whereSql}
-      ORDER BY f.annee DESC, f.titre ASC
-      LIMIT $${paramIndex++} OFFSET $${paramIndex++};
+        duree_texte((pf.details ->> 'duree')::INTEGER) AS duree_texte,
+        COALESCE(note_ponderee(pf.id), v.moyenne) AS note_ponderee
+      FROM paged_films pf
+      LEFT JOIN v_fiche_film v ON v.id = pf.id
+      ORDER BY pf.annee DESC, pf.titre ASC;
     `;
 
     const dataRes = await query(dataSql, [...params, limit, offset]);

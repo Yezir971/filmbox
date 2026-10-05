@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // Requête 5.1 de exo.sql : Top 3 par genre avec fonction de fenêtrage RANK()
+    // Requête 5.1 de exo.sql : Top 3 par genre optimisé via la vue matérialisée mv_stats_films
     const sql = `
       WITH stats_films AS (
           SELECT 
@@ -17,12 +17,11 @@ export async function GET() {
               f.titre, 
               f.annee,
               f.details,
-              ROUND(AVG(n.note), 2) AS moyenne,
-              COUNT(n.note) AS nb_notes
-          FROM films f
-          JOIN notes n ON f.id = n.film_id
-          GROUP BY f.id, f.genre, f.titre, f.annee, f.details
-          HAVING COUNT(n.note) >= 3
+              s.moyenne,
+              s.nb_notes
+          FROM mv_stats_films s
+          JOIN films f ON f.id = s.film_id
+          WHERE s.nb_notes >= 3
       ),
       classement AS (
           SELECT 

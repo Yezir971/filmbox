@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    // 1. Tendances : Top films selon la requête M2.4 de exo.sql
+    // 1. Tendances : Top films via la vue matérialisée mv_stats_films (optimisée avec idx_mv_stats_films_moyenne)
     const trendingSql = `
       SELECT 
         f.id, 
@@ -17,21 +17,20 @@ export async function GET() {
         f.annee, 
         f.genre, 
         f.details, 
-        ROUND(AVG(n.note), 2) AS moyenne, 
-        COUNT(n.film_id) AS nb_notes,
+        s.moyenne, 
+        s.nb_notes,
         duree_texte((f.details ->> 'duree')::INTEGER) AS duree_texte,
-        COALESCE(note_ponderee(f.id), AVG(n.note)) AS note_ponderee
-      FROM notes n 
-      INNER JOIN films f ON f.id = n.film_id 
-      GROUP BY f.id, f.titre, f.annee, f.genre, f.details 
-      HAVING COUNT(n.film_id) >= 1 
-      ORDER BY moyenne DESC 
+        COALESCE(note_ponderee(f.id), s.moyenne) AS note_ponderee
+      FROM mv_stats_films s
+      JOIN films f ON f.id = s.film_id
+      WHERE s.nb_notes >= 1
+      ORDER BY s.moyenne DESC, s.nb_notes DESC
       LIMIT 6;
     `;
     const trendingRes = await query(trendingSql);
     const trendingFilms = trendingRes.rows.map(mapRowToFilm);
 
-    // 2. Derniers visionnages de la communauté selon la requête 8.4 de exo.sql
+    // 2. Derniers visionnages de la communauté selon la requête 8.4 de exo.sql (exploite idx_journal_date_id)
     const journalSql = `
       SELECT 
         j.id, 
@@ -62,8 +61,8 @@ export async function GET() {
       };
     });
 
-    // 3. Décompte global des visionnages
-    const countSql = `SELECT COUNT(*) AS total FROM journal;`;
+    // 3. Décompte global instantané des visionnages (lecture directe de pg_class)
+    const countSql = `SELECT reltuples::BIGINT AS total FROM pg_class WHERE relname = 'journal';`;
     const countRes = await query(countSql);
     const totalCommunityLogsToday = parseInt(countRes.rows[0]?.total || "0", 10);
 

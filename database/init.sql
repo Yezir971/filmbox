@@ -1249,7 +1249,7 @@ AS $$
     SELECT (p_minutes / 60) || ' h ' || LPAD((p_minutes % 60)::TEXT, 2, '0');
 $$;
 
--- 10.2 Calcul de la note pondérée bayésienne (m=5)
+-- 10.2 Calcul de la note pondérée bayésienne (m=5) optimisée avec mise en cache de session
 CREATE OR REPLACE FUNCTION note_ponderee(p_film_id INTEGER, p_m INTEGER DEFAULT 5)
 RETURNS NUMERIC
 LANGUAGE plpgsql
@@ -1259,6 +1259,7 @@ DECLARE
     v_nb       INTEGER;
     v_moyenne  NUMERIC;
     v_globale  NUMERIC;
+    v_setting  TEXT;
 BEGIN
     SELECT COUNT(*), AVG(note) INTO v_nb, v_moyenne
     FROM notes WHERE film_id = p_film_id;
@@ -1267,7 +1268,13 @@ BEGIN
         RETURN 0;
     END IF;
 
-    SELECT AVG(note) INTO v_globale FROM notes;
+    v_setting := current_setting('filmbox.note_globale', true);
+    IF v_setting IS NOT NULL AND v_setting <> '' THEN
+        v_globale := v_setting::NUMERIC;
+    ELSE
+        SELECT ROUND(AVG(note), 4) INTO v_globale FROM notes;
+        PERFORM set_config('filmbox.note_globale', v_globale::TEXT, false);
+    END IF;
 
     RETURN ROUND(  (v_nb::NUMERIC / (v_nb + p_m)) * v_moyenne
                  + (p_m::NUMERIC  / (v_nb + p_m)) * v_globale, 2);
@@ -1291,4 +1298,40 @@ $$;
 
 -- Réinitialisation de la version de collation pour compatibilité alpine/musl (évite tout warning de collation)
 UPDATE pg_database SET datcollversion = NULL;
+
+-- =======================================================
+-- Index d'optimisation des performances (Rapport M12)
+-- =======================================================
+
+-- M12.1 : Historique des visionnages par membre
+CREATE INDEX IF NOT EXISTS idx_journal_utilisateur_date 
+ON journal (utilisateur_id, date_visionnage DESC);
+
+-- M12.2 : Tendances mensuelles et condition sargable
+CREATE INDEX IF NOT EXISTS idx_journal_date_film 
+ON journal (date_visionnage, film_id);
+
+-- M12.3 : Recherche textuelle avec Jokers (GIN Trigramme)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX IF NOT EXISTS idx_films_titre_trgm 
+ON films USING GIN (titre gin_trgm_ops);
+
+-- Index additionnels pour les goulots d'étranglement de l'application
+CREATE INDEX IF NOT EXISTS idx_notes_film_id 
+ON notes (film_id, note);
+
+CREATE INDEX IF NOT EXISTS idx_journal_date_id 
+ON journal (date_visionnage DESC, id DESC);
+
+CREATE INDEX IF NOT EXISTS idx_films_annee_titre 
+ON films (annee DESC, titre ASC);
+
+CREATE INDEX IF NOT EXISTS idx_utilisateurs_pseudo_lower 
+ON utilisateurs (LOWER(pseudo));
+
+CREATE INDEX IF NOT EXISTS idx_casting_personne_role 
+ON casting (personne_id, role);
+
+CREATE INDEX IF NOT EXISTS idx_mv_stats_films_moyenne 
+ON mv_stats_films (moyenne DESC, nb_notes DESC);
 

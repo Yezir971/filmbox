@@ -41,12 +41,11 @@ export async function GET() {
     const directors: RankingDirector[] = await Promise.all(
       res.rows.map(async (row: any) => {
         const topFilmSql = `
-          SELECT f.id, f.titre, ROUND(AVG(n.note), 2) AS moyenne, f.annee
+          SELECT f.id, f.titre, COALESCE(s.moyenne, 0) AS moyenne, f.annee
           FROM films f
           JOIN casting c ON c.film_id = f.id AND c.personne_id = $1 AND c.role = 'realisateur'
-          LEFT JOIN notes n ON n.film_id = f.id
-          GROUP BY f.id, f.titre, f.annee
-          ORDER BY moyenne DESC NULLS LAST
+          LEFT JOIN mv_stats_films s ON s.film_id = f.id
+          ORDER BY s.moyenne DESC NULLS LAST
           LIMIT 3;
         `;
         const topFilmRes = await query(topFilmSql, [row.id]);

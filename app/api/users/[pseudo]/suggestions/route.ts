@@ -12,33 +12,36 @@ export async function GET(
   const pseudo = decodeURIComponent(params.pseudo || "cinephile_92");
 
   try {
-    // Requête 3.2 de exo.sql : Découverte / suggestions des films non encore vus
+    // Requête 3.2 de exo.sql : Découverte / suggestions optimisée avec CTE de pagination
     const sql = `
+      WITH user_vus AS (
+          SELECT j.film_id 
+          FROM journal j
+          WHERE j.utilisateur_id = (SELECT id FROM utilisateurs WHERE LOWER(pseudo) = LOWER($1) LIMIT 1)
+      ),
+      paged_suggestions AS (
+          SELECT f.id, f.titre, f.annee, f.genre, f.details
+          FROM films f
+          LEFT JOIN user_vus uv ON f.id = uv.film_id
+          WHERE uv.film_id IS NULL
+          ORDER BY f.annee DESC, f.titre ASC
+          LIMIT 15
+      )
       SELECT 
-          f.id, 
-          f.titre, 
-          f.annee, 
-          f.genre, 
-          f.details,
+          ps.id, 
+          ps.titre, 
+          ps.annee, 
+          ps.genre, 
+          ps.details,
           v.realisateurs,
           v.duree_min,
           v.nb_notes,
           v.moyenne,
-          duree_texte((f.details ->> 'duree')::INTEGER) AS duree_texte,
-          COALESCE(note_ponderee(f.id), v.moyenne) AS note_ponderee
-      FROM films f
-      LEFT JOIN v_fiche_film v ON v.id = f.id
-      LEFT JOIN (
-          SELECT j.film_id 
-          FROM journal j
-          JOIN utilisateurs u ON j.utilisateur_id = u.id
-          WHERE LOWER(u.pseudo) = LOWER($1)
-      ) vus ON f.id = vus.film_id
-      WHERE vus.film_id IS NULL
-      ORDER BY 
-          f.annee DESC, 
-          f.titre ASC
-      LIMIT 15;
+          duree_texte((ps.details ->> 'duree')::INTEGER) AS duree_texte,
+          COALESCE(note_ponderee(ps.id), v.moyenne) AS note_ponderee
+      FROM paged_suggestions ps
+      LEFT JOIN v_fiche_film v ON v.id = ps.id
+      ORDER BY ps.annee DESC, ps.titre ASC;
     `;
 
     const res = await query(sql, [pseudo]);
