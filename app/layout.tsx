@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Cinzel, Inter } from "next/font/google";
-import "./globals.css";
 import { getSession } from "@/lib/session";
 import { SessionProvider } from "@/lib/auth/useSession";
 import { SWRProvider } from "@/lib/swr-provider";

@@ -1,0 +1,11 @@
+FROM postgres:16-alpine
+
+LABEL maintainer="FilmBox"
+LABEL description="Base de donnees PostgreSQL 16 pre-remplie avec schema, roles, fonctions et index FilmBox"
+
+# Copie du dump complet dans le repertoire d'initialisation automatique
+COPY database/dump.sql /docker-entrypoint-initdb.d/01-dump.sql
+
+# Verification de disponibilite
+HEALTHCHECK --interval=5s --timeout=5s --retries=5 \
+  CMD pg_isready -U yoda -d filmbox || exit 1

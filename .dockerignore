@@ -7,7 +7,8 @@ node_modules
 *.md
 docker-compose*.yaml
 Dockerfile*
-database
+database/init.sql
+!database/dump.sql
 
 llms.txt
 AGENT.md
