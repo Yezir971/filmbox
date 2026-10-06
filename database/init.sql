@@ -47,6 +47,7 @@ CREATE TABLE public.films (
     saga_id integer,
     film_precedent_id integer,
     details jsonb NOT NULL,
+    nb_vues integer DEFAULT 0 NOT NULL,
     CONSTRAINT films_annee_check CHECK (((annee >= 1888) AND (annee <= 2100)))
 );
 

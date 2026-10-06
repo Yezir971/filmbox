@@ -6,6 +6,7 @@ import { Film, Compass, Trophy, Bookmark, User, Clapperboard, Sparkles } from "l
 import { cn } from "@/lib/utils";
 import { useSession } from "@/lib/auth/useSession";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { GlobalSearch } from "./GlobalSearch";
 
 const navLinks = [
   { href: "/", label: "Accueil", icon: Clapperboard },
@@ -63,13 +64,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/style-guide"
-            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border border-border/60 text-muted-foreground hover:text-gold-300 hover:border-gold-500/30 transition-colors"
-          >
-            <Sparkles className="h-3 w-3 text-gold-400" />
-            Style Guide
-          </Link>
+          <GlobalSearch />
 
           {isAuthenticated && user ? (
             <Link

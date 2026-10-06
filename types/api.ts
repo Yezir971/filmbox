@@ -27,6 +27,7 @@ export interface Film {
   oscarsCount?: number;
   details?: FilmDetails;
   sagaId?: string;
+  viewsCount?: number;
 }
 
 export interface FicheFilm extends Film {

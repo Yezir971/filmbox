@@ -32,6 +32,7 @@ export async function GET(
         f.genre, 
         f.details, 
         f.saga_id,
+        f.nb_vues,
         v.realisateurs, 
         v.duree_min, 
         v.nb_notes, 

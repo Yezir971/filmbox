@@ -36,3 +36,30 @@ export async function getFilmSaga(id: string): Promise<{ sagaId: string; sagaNam
     return null;
   }
 }
+
+/**
+ * 15.2 : Incrémente le nombre de vues d'un film de manière atomique (FOR UPDATE)
+ */
+export async function incrementFilmViews(
+  titleOrId: string | number
+): Promise<{ success: boolean; id: number; titre: string; previousViews: number; nb_vues: number }> {
+  return apiClient<{ success: boolean; id: number; titre: string; previousViews: number; nb_vues: number }>(
+    `/api/films/${titleOrId}/view`,
+    {
+      method: "POST",
+    }
+  );
+}
+
+/**
+ * 16.3 : Recherche rapide de films via la fonction SQL rechercher_films(texte)
+ */
+export async function quickSearchFilms(text: string): Promise<Film[]> {
+  if (!text || text.trim().length === 0) return [];
+  const res = await apiClient<{ films: Film[] }>("/api/films/search", {
+    params: { q: text.trim() },
+    cache: "no-store",
+  });
+  return res.films || [];
+}
+

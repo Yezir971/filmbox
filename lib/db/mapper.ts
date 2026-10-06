@@ -30,6 +30,7 @@ export function mapRowToFilm(row: any): Film {
     hasOscars: Boolean(details.oscar_meilleur_film),
     oscarsCount: details.oscar_meilleur_film ? 1 : 0,
     sagaId: row.saga_id ? String(row.saga_id) : undefined,
+    viewsCount: row.nb_vues != null ? parseInt(row.nb_vues, 10) : 0,
     details: {
       boxOffice: details.box_office || "N/A",
       budget: details.budget || "N/A",

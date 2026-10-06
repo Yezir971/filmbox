@@ -16,10 +16,16 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "10", 10);
 
   try {
-    // Construction dynamique basée sur les requêtes M2.1, 8.1, 8.2, 8.3 et la vue v_fiche_film
+    // Construction dynamique basée sur les requêtes M2.1, 8.1, 8.2, 8.3 et la fonction rechercher_films (16.3)
     let whereClauses: string[] = [];
     let params: any[] = [];
     let paramIndex = 1;
+
+    const hasSearch = Boolean(search && search.trim().length > 0);
+    const tableSource = hasSearch ? `rechercher_films($${paramIndex++})` : `films`;
+    if (hasSearch) {
+      params.push(search!.trim());
+    }
 
     if (genre && genre !== "all") {
       whereClauses.push(`LOWER(f.genre) = LOWER($${paramIndex++})`);
@@ -30,12 +36,6 @@ export async function GET(request: NextRequest) {
       const startYear = parseInt(decade, 10);
       whereClauses.push(`f.annee >= $${paramIndex++} AND f.annee < $${paramIndex++}`);
       params.push(startYear, startYear + 10);
-    }
-
-    if (search) {
-
-      whereClauses.push(`f.titre ILIKE $${paramIndex++}`);
-      params.push(`%${search}%`);
     }
 
     if (hasOscars) {
@@ -51,10 +51,10 @@ export async function GET(request: NextRequest) {
     const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
 
     // Total count en base (estimation rapide si aucun filtre, sinon count exact indexé)
-    const countSql = whereClauses.length === 0
+    const countSql = !hasSearch && whereClauses.length === 0
       ? `SELECT reltuples::BIGINT AS total FROM pg_class WHERE relname = 'films';`
-      : `SELECT COUNT(*) AS total FROM films f ${whereSql};`;
-    const countRes = await query(countSql, whereClauses.length === 0 ? [] : params);
+      : `SELECT COUNT(*) AS total FROM ${tableSource} f ${whereSql};`;
+    const countRes = await query(countSql, (!hasSearch && whereClauses.length === 0) ? [] : params);
     const total = parseInt(countRes.rows[0]?.total || "0", 10);
 
     // Fetch paginé optimisé : filtrage et tri sur les IDs d'abord via CTE, puis enrichissement
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
           f.genre, 
           f.details, 
           f.saga_id
-        FROM films f
+        FROM ${tableSource} f
         ${whereSql}
         ORDER BY f.annee DESC, f.titre ASC
         LIMIT $${paramIndex++} OFFSET $${paramIndex++}

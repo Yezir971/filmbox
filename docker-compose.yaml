@@ -12,11 +12,11 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
-      DATABASE_URL: postgresql://${PGUSER:-yoda}:${PGPASSWORD:-postgres}@postgres:${PGPORT:-5432}/${PGDATABASE:-filmbox}
+      DATABASE_URL: postgresql://${PGUSER}:${PGPASSWORD}@postgres:${PGPORT:-5432}/${PGDATABASE:-filmbox}
       PGHOST: postgres
       PGPORT: ${PGPORT:-5432}
-      PGUSER: ${PGUSER:-yoda}
-      PGPASSWORD: ${PGPASSWORD:-postgres}
+      PGUSER: ${PGUSER}
+      PGPASSWORD: ${PGPASSWORD}
       PGDATABASE: ${PGDATABASE:-filmbox}
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-}
       TMDB_API_KEY: ${TMDB_API_KEY:-}
@@ -32,8 +32,8 @@ services:
     container_name: filmbox-pg-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${PGUSER:-yoda}
-      POSTGRES_PASSWORD: ${PGPASSWORD:-postgres}
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
       POSTGRES_DB: ${PGDATABASE:-filmbox}
     ports:
       - "${PGPORT:-5432}:5432"
@@ -41,7 +41,7 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-yoda} -d ${PGDATABASE:-filmbox}"]
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER} -d ${PGDATABASE:-filmbox}"]
       interval: 5s
       timeout: 5s
       retries: 5
